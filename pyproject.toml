@@ -11,6 +11,9 @@ dependencies = [
     "rich>=13.7",
     "pillow>=10.0",
     "typer>=0.12",
+    "imagehash>=4.3",
+    "numpy>=1.26",
+    "onnxruntime>=1.17",
 ]
 
 [project.optional-dependencies]
