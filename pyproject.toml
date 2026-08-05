@@ -1,0 +1,23 @@
+[project]
+name = "styleforge"
+version = "0.1.0"
+description = "화풍 학습 · 적용 자동화 CLI 툴"
+requires-python = ">=3.11"
+dependencies = [
+    "requests>=2.31",
+    "websocket-client>=1.7",
+    "pydantic-settings>=2.2",
+    "python-dotenv>=1.0",
+    "rich>=13.7",
+    "pillow>=10.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["styleforge*"]

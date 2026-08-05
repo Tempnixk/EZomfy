@@ -136,6 +136,10 @@ ENV/
 env.bak/
 venv.bak/
 
+# StyleForge 데이터/산출물 (CLAUDE.md 5장 — 저장소에 이미지를 커밋하지 않는다)
+/data/
+/outputs/
+
 # Spyder project settings
 .spyderproject
 .spyproject
