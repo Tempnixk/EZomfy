@@ -14,6 +14,8 @@ dependencies = [
     "imagehash>=4.3",
     "numpy>=1.26",
     "onnxruntime>=1.17",
+    "psutil>=5.9",
+    "tomli-w>=1.0",
 ]
 
 [project.optional-dependencies]

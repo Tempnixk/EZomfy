@@ -10,6 +10,7 @@ from rich.progress import Progress
 
 from styleforge.apply.comfy_client import ComfyClientError, ProgressUpdate
 from styleforge.apply.runner import ApplyError, run_apply
+from styleforge.train.runner import TrainProgress, TrainRunnerError, run_train
 
 for _stream in (sys.stdout, sys.stderr):
     if hasattr(_stream, "reconfigure"):
@@ -20,10 +21,10 @@ app = typer.Typer(help="StyleForge — 화풍 학습 · 적용 자동화 CLI 툴
 
 @app.callback()
 def _main() -> None:
-    """train/apply/sweep 명령이 늘어나도 서브커맨드 구조를 유지하기 위한 콜백.
+    """등록된 명령이 하나뿐이면 Typer가 이를 최상위 명령으로 접어버려
 
-    등록된 명령이 apply 하나뿐이면 Typer가 이를 최상위 명령으로 접어버려
-    `styleforge apply ...` 형태(CLAUDE.md 1·7·12장)가 깨진다.
+    `styleforge apply ...` 형태(CLAUDE.md 1·7·12장)가 깨지므로, 명령이
+    여러 개인 지금도 서브커맨드 구조가 유지되도록 콜백을 남겨둔다.
     """
 
 
@@ -59,6 +60,52 @@ def apply(
         raise typer.Exit(code=1) from exc
 
     typer.echo(f"완료: {output_dir}")
+
+
+@app.command()
+def train(
+    input: Path = typer.Option(..., "--input", help="레퍼런스 이미지 폴더 (--filter 사용 시 데이터셋 루트)"),
+    name: str = typer.Option(..., "--name", help="스타일 이름 = 트리거 워드 = LoRA 파일명"),
+    config: Path = typer.Option(Path("configs/train_default.toml"), "--config", help="학습 설정 TOML"),
+    filter: Optional[str] = typer.Option(None, "--filter", help="화목 코드 접두어 (대규모 데이터셋 사용 시)"),
+    meta_filter: Optional[str] = typer.Option(
+        None, "--meta-filter", help="라벨 필드 기준 2차 필터 (key=value,key=value)"
+    ),
+    include_detail: bool = typer.Option(False, "--include-detail", help="상세묘사 이미지도 포함"),
+    limit: int = typer.Option(40, "--limit", help="학습에 사용할 최대 장수"),
+    caption_mode: Optional[str] = typer.Option(None, "--caption-mode", help="auto | external"),
+    yes: bool = typer.Option(False, "--yes", help="검증 경고 무시하고 진행"),
+) -> None:
+    """레퍼런스 이미지 폴더로 화풍 LoRA를 학습한다."""
+    parsed_meta_filter = None
+    if meta_filter:
+        parsed_meta_filter = dict(pair.split("=", 1) for pair in meta_filter.split(","))
+
+    try:
+        with Progress() as progress:
+            task = progress.add_task("학습 중", total=None)
+
+            def on_progress(update: TrainProgress) -> None:
+                if update.total_steps:
+                    progress.update(task, total=update.total_steps, completed=update.step)
+
+            lora_path = run_train(
+                input_dir=input,
+                name=name,
+                config_template=config,
+                genre_code=filter,
+                meta_filter=parsed_meta_filter,
+                include_detail=include_detail,
+                limit=limit,
+                caption_mode=caption_mode,  # type: ignore[arg-type]
+                auto_confirm=yes,
+                on_progress=on_progress,
+            )
+    except TrainRunnerError as exc:
+        typer.echo(f"실패: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    typer.echo(f"완료: {lora_path}")
 
 
 if __name__ == "__main__":

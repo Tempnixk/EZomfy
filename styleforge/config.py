@@ -26,7 +26,28 @@ class Settings(BaseSettings):
     wd14_tags_csv: Path | None = None
     wd14_tag_threshold: float = 0.35
 
-    @field_validator("dataset_root", "wd14_model_path", "wd14_tags_csv", mode="before")
+    # train/ — kohya_ss(sd-scripts)는 별도 venv로 서브프로세스 호출한다 (CLAUDE.md 3장 가상환경 분리)
+    kohya_python: Path | None = None
+    kohya_script_dir: Path | None = None
+    sd15_checkpoint_path: Path | None = None  # kohya 학습용 SD1.5 체크포인트 (ComfyUI와 별개 설정)
+
+    # train 실행 시 ComfyUI를 자동 종료 후 재기동한다 (CLAUDE.md 2-(3))
+    comfy_start_command: str | None = None
+    comfy_start_cwd: Path | None = None
+    comfy_lora_dir: Path | None = None  # 학습된 LoRA를 복사해 넣을 ComfyUI의 models/loras
+
+    @field_validator(
+        "dataset_root",
+        "wd14_model_path",
+        "wd14_tags_csv",
+        "kohya_python",
+        "kohya_script_dir",
+        "sd15_checkpoint_path",
+        "comfy_start_command",
+        "comfy_start_cwd",
+        "comfy_lora_dir",
+        mode="before",
+    )
     @classmethod
     def _empty_string_as_unset(cls, value: object) -> object:
         """.env에 키만 있고 값이 비어 있으면(WD14_MODEL_PATH=) Path("")=='.'로

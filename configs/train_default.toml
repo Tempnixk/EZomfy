@@ -1,0 +1,27 @@
+# StyleForge 기본 학습 하이퍼파라미터 (CLAUDE.md 3장 — VRAM 8GB/RTX 3060 Ti 기준).
+# train/config_builder.py가 이 값을 읽어 이번 실행의 런타임 값(데이터 경로,
+# 체크포인트, 출력 위치 등)과 합쳐 kohya용 TOML 두 개(dataset_config,
+# train_config)를 생성한다. --config로 다른 템플릿을 지정할 수 있다.
+
+[resolution]
+resolution = 512
+enable_bucket = true
+bucket_reso_steps = 64
+min_bucket_reso = 256
+max_bucket_reso = 1024
+
+[training]
+network_module = "networks.lora"
+# 8~16 중 8GB VRAM에서 가장 무난한 하한값. 실측 후 Phase 4에서 조정한다.
+network_dim = 8
+network_alpha = 4
+train_batch_size = 1
+max_train_epochs = 10
+learning_rate = 1e-4
+optimizer_type = "AdamW8bit"
+lr_scheduler = "cosine"
+mixed_precision = "fp16"
+gradient_checkpointing = true
+cache_latents = true
+save_every_n_epochs = 2
+save_model_as = "safetensors"

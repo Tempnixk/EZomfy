@@ -30,6 +30,12 @@ def prepare_dataset(name: str, images_with_captions: dict[Path, str]) -> Preproc
     output_dir = settings.data_dir / "prepared" / name
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # 이전 실행에서 남은 이미지·캡션을 지운다. --limit/--filter가 달라진
+    # 채로 재실행하면 지우지 않을 경우 옛 파일이 새 학습 데이터에 섞여
+    # 들어간다 (subset_manifest.json 등 다른 산출물은 건드리지 않는다).
+    for stale in [*output_dir.glob("*.jpg"), *output_dir.glob("*.txt")]:
+        stale.unlink()
+
     skipped: list[Path] = []
     saved = 0
 
