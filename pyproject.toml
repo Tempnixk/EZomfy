@@ -10,10 +10,14 @@ dependencies = [
     "python-dotenv>=1.0",
     "rich>=13.7",
     "pillow>=10.0",
+    "typer>=0.12",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+
+[project.scripts]
+styleforge = "styleforge.cli:app"
 
 [build-system]
 requires = ["setuptools>=68"]

@@ -1,0 +1,31 @@
+# style_transfer_lineart.json 노드 ID ↔ apply 파라미터 매핑.
+# workflow_loader.py가 이 파일을 읽어 지정된 노드의 inputs만 교체한다.
+# 노드 ID는 절대 코드에 하드코딩하지 않는다 (CLAUDE.md 6장).
+
+[params.input_image]
+node = "1"
+field = "image"
+
+[params.lora_name]
+node = "10"
+field = "lora_name"
+
+[params.lora_weight]
+node = "10"
+field = "strength_model"
+
+[params.positive_prompt]
+node = "6"
+field = "text"
+
+[params.controlnet_strength]
+node = "9"
+field = "strength"
+
+[params.denoise]
+node = "3"
+field = "denoise"
+
+[params.seed]
+node = "3"
+field = "seed"
