@@ -110,7 +110,7 @@ def write_configs(
     training_cfg = template.get("training", {})
 
     dataset_config = build_dataset_config(
-        prepared_dir,
+        prepared_dir.resolve(),
         num_repeats=num_repeats,
         resolution=res_cfg.get("resolution", 512),
         batch_size=training_cfg.get("train_batch_size", 1),
@@ -123,11 +123,14 @@ def write_configs(
     run_dir = settings.data_dir / "prepared" / name
     run_dir.mkdir(parents=True, exist_ok=True)
 
+    # kohya 서브프로세스는 kohya_script_dir을 cwd로 실행되므로(train/runner.py
+    # run_kohya) 상대 경로를 그대로 넘기면 엉뚱한 위치를 가리킨다. TOML에
+    # 적히는 모든 경로는 절대 경로로 고정한다.
     train_config = build_train_config(
         training_cfg,
-        output_dir=Path("outputs/loras"),
+        output_dir=Path("outputs/loras").resolve(),
         output_name=name,
-        logging_dir=run_dir / "logs",
+        logging_dir=(run_dir / "logs").resolve(),
         seed=seed,
     )
 

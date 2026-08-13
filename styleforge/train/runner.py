@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -146,18 +147,36 @@ def run_kohya(
     if not script.is_file():
         raise TrainRunnerError(f"kohya train_network.py not found: {script}")
 
+    # kohya 공식 문서(docs/train_network.md)가 권장하는 실행 방식이 `python
+    # train_network.py`가 아니라 `accelerate launch ... train_network.py`다.
+    # 단일 GPU라 분산 학습이 필요없어 보이지만, mixed_precision 등 Accelerator
+    # 초기화를 accelerate CLI가 맡는 경로가 표준 경로이므로 그대로 따른다.
     cmd = [
         str(settings.kohya_python),
+        "-m",
+        "accelerate.commands.launch",
+        "--num_cpu_threads_per_process",
+        "1",
         str(script),
         "--dataset_config",
-        str(dataset_config),
+        str(dataset_config.resolve()),
         "--config_file",
-        str(train_config),
+        str(train_config.resolve()),
     ]
 
     if log_path is not None:
         log_path.parent.mkdir(parents=True, exist_ok=True)
-    log_file = log_path.open("w", encoding="utf-8") if log_path else None
+    # buffering=1(line buffering) — 기본 블록 버퍼링이면 학습이 오래 걸리는
+    # 중에 죽거나 강제 종료됐을 때 로그가 디스크에 전혀 안 남아 원인 파악이
+    # 안 된다. 진행 중에도 실시간으로 tail 가능해야 디버깅이 된다.
+    log_file = log_path.open("w", encoding="utf-8", buffering=1) if log_path else None
+
+    # kohya 코드베이스에는 UTF-8이 아닌 문자(예: 장음부호 ー)가 섞여 있어, 자식
+    # 프로세스가 Windows 로캘 코드페이지(cp949 등)로 stdout을 인코딩하면 그
+    # 문자에서 UnicodeEncodeError로 죽는다. PYTHONUTF8=1로 자식의 I/O 자체를
+    # UTF-8로 강제한다 — 부모 쪽 encoding="utf-8"은 파이프에서 온 바이트를
+    # 읽는 쪽만 담당하므로 이것만으로는 자식의 인코딩 실패를 막지 못한다.
+    child_env = {**os.environ, "PYTHONUTF8": "1"}
 
     try:
         process = subprocess.Popen(
@@ -168,6 +187,7 @@ def run_kohya(
             text=True,
             encoding="utf-8",
             errors="replace",
+            env=child_env,
         )
 
         assert process.stdout is not None
