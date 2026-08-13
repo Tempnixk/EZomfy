@@ -345,14 +345,14 @@ CLIP 기반 평가(스타일 유사도 / 원본 보존도) → 마크다운 리�
 
 ## 9. 구현 순서 (한 번에 한 Phase씩)
 
-- [ ] **Phase 0** — `apply/comfy_client.py` 단독 검증.
+- [x] **Phase 0** — `apply/comfy_client.py` 단독 검증.
       워크플로우 JSON 제출 → 진행률 수신 → 이미지 저장까지 스크립트로 확인.
       **이게 되기 전에 다른 파일을 만들지 않는다.**
-- [ ] **Phase 1** — `workflow_loader.py` + 매핑 TOML. `apply` 명령 동작 (기존 LoRA 사용).
-- [ ] **Phase 2** — `dataset/` 전체. 폴더 검증 → 서브셋 선별 → 전처리 → 캡셔닝(A·B 두 경로).
+- [x] **Phase 1** — `workflow_loader.py` + 매핑 TOML. `apply` 명령 동작 (기존 LoRA 사용).
+- [x] **Phase 2** — `dataset/` 전체. 폴더 검증 → 서브셋 선별 → 전처리 → 캡셔닝(A·B 두 경로).
       AI 허브 라벨 승인 대기 중이라면 B경로(WD14)부터 구현하고 A경로는 나중에 붙인다.
-- [ ] **Phase 3** — `train/` 전체. kohya 서브프로세스 + VRAM 관리. `train` 명령 완성.
-- [ ] **Phase 4** — `sweep/` + `evaluate/`. 비교 그리드 + CLIP 평가 + 리포트.
+- [x] **Phase 3** — `train/` 전체. kohya 서브프로세스 + VRAM 관리. `train` 명령 완성.
+- [x] **Phase 4** — `sweep/` + `evaluate/`. 비교 그리드 + CLIP 평가 + 리포트.
 - [ ] **Phase 5** — 실험 3회 이상 수행 후 `docs/experiments.md`, `benchmarks.md`, README 정리.
 
 각 Phase 완료 후 실제 실행으로 검증하고 커밋한다. 다음 Phase 시작 전 컨텍스트를 정리한다.

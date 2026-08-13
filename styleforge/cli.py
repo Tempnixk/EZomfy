@@ -10,6 +10,8 @@ from rich.progress import Progress
 
 from styleforge.apply.comfy_client import ComfyClientError, ProgressUpdate
 from styleforge.apply.runner import ApplyError, run_apply
+from styleforge.sweep.planner import DEFAULT_AXES
+from styleforge.sweep.runner import SweepError, SweepProgress, run_sweep
 from styleforge.train.runner import TrainProgress, TrainRunnerError, run_train
 
 for _stream in (sys.stdout, sys.stderr):
@@ -106,6 +108,37 @@ def train(
         raise typer.Exit(code=1) from exc
 
     typer.echo(f"완료: {lora_path}")
+
+
+@app.command()
+def sweep(
+    image: Path = typer.Option(..., "--image", exists=True, help="입력 이미지"),
+    style: str = typer.Option(..., "--style", help="LoRA 이름"),
+    axes: str = typer.Option(DEFAULT_AXES, "--axes", help="탐색 축 (콤마 구분, 최대 2개: denoise/lora_weight/controlnet_strength)"),
+    steps: int = typer.Option(4, "--steps", help="축당 분할 수"),
+) -> None:
+    """파라미터 조합을 탐색해 비교 그리드와 평가 리포트를 생성한다."""
+    try:
+        with Progress() as progress:
+            task = progress.add_task("탐색 중", total=None)
+
+            def on_progress(update: SweepProgress) -> None:
+                completed = update.combo_index + (0.5 if update.stage == "evaluating" else 0.0)
+                progress.update(
+                    task,
+                    total=update.total_combos,
+                    completed=completed,
+                    description=f"조합 {update.combo_index + 1}/{update.total_combos} ({update.stage})",
+                )
+
+            output_dir = run_sweep(
+                image=image, style=style, axes=axes, steps=steps, on_progress=on_progress
+            )
+    except SweepError as exc:
+        typer.echo(f"실패: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    typer.echo(f"완료: {output_dir}")
 
 
 if __name__ == "__main__":

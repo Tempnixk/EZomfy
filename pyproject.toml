@@ -20,6 +20,11 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+# torch/torchvision은 Windows 기본 PyPI 인덱스가 CUDA 포함 빌드를 주므로
+# CPU 전용 인덱스로 설치할 것 (evaluate는 ComfyUI/kohya와 VRAM을 다투지 않는다):
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+#   pip install open-clip-torch pytorch-fid
+evaluate = ["torch", "torchvision", "open-clip-torch", "pytorch-fid>=0.3"]
 
 [project.scripts]
 styleforge = "styleforge.cli:app"
