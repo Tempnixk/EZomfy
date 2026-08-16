@@ -1,0 +1,25 @@
+# E2 실험용 학습 설정 — exp01: network_dim=8, learning_rate=1e-4 (docs/experiments.md E2).
+# train_default.toml과의 차이는 train_batch_size(1→2)뿐이다 — E2는 세 실험
+# 공통 조건을 batch=2로 두고 network_dim/learning_rate만 바꿔 비교한다.
+
+[resolution]
+resolution = 512
+enable_bucket = true
+bucket_reso_steps = 64
+min_bucket_reso = 256
+max_bucket_reso = 1024
+
+[training]
+network_module = "networks.lora"
+network_dim = 8
+network_alpha = 4
+train_batch_size = 2
+max_train_epochs = 10
+learning_rate = 1e-4
+optimizer_type = "AdamW8bit"
+lr_scheduler = "cosine"
+mixed_precision = "fp16"
+gradient_checkpointing = true
+cache_latents = true
+save_every_n_epochs = 2
+save_model_as = "safetensors"

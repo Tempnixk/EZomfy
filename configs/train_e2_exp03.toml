@@ -1,0 +1,24 @@
+# E2 실험용 학습 설정 — exp03: network_dim=16, learning_rate=5e-5 (docs/experiments.md E2).
+# exp02와 network_dim은 같고 learning_rate만 절반으로 낮춘 조합.
+
+[resolution]
+resolution = 512
+enable_bucket = true
+bucket_reso_steps = 64
+min_bucket_reso = 256
+max_bucket_reso = 1024
+
+[training]
+network_module = "networks.lora"
+network_dim = 16
+network_alpha = 8
+train_batch_size = 2
+max_train_epochs = 10
+learning_rate = 5e-5
+optimizer_type = "AdamW8bit"
+lr_scheduler = "cosine"
+mixed_precision = "fp16"
+gradient_checkpointing = true
+cache_latents = true
+save_every_n_epochs = 2
+save_model_as = "safetensors"
