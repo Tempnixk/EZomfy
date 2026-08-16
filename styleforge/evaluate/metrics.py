@@ -112,23 +112,64 @@ def evaluate_style_transfer(
     return StyleEvalResult(style_similarity=style_similarity, preservation_similarity=preservation)
 
 
-def compute_fid(generated_dir: Path, real_dir: Path, *, device: str = "cpu") -> float:
+def compute_fid(
+    generated_dir: Path,
+    real_dir: Path,
+    *,
+    device: str = "cpu",
+    num_workers: int = 0,
+    batch_size: int = 1,
+) -> float:
     """generated_dir와 real_dir(예: AI 허브 Validation 세트) 간 FID.
 
     pytorch-fid 패키지의 표준 InceptionV3(FID 전용 가중치)를 그대로 쓴다 —
     직접 구현하면 레퍼런스 논문·도구들이 쓰는 것과 다른 Inception 가중치를
     쓰게 되어 절대값 비교가 무의미해지기 때문이다.
+
+    `num_workers` 기본값은 0이다. pytorch-fid 내부 DataLoader는 기본
+    `num_workers=1`로 별도 프로세스를 spawn하는데, Windows에서
+    `if __name__ == "__main__":` 가드 없는 호출부(예: 인터랙티브 스크립트)와
+    조합되면 그 spawn이 죽는다. 메인 프로세스에서 바로 도는 0이 안전하다.
+
+    `batch_size` 기본값은 1이다. pytorch-fid의 DataLoader는 리사이즈 없이
+    원본 해상도 그대로 배치를 쌓는데, 민화 데이터셋은 족자·병풍 형태로
+    이미지마다 종횡비가 달라 배치 크기가 2 이상이면 텐서 stack이 크기
+    불일치로 실패한다. 배치당 1장이면 이 문제가 생기지 않는다.
+
+    Frechet distance는 `pytorch_fid.fid_score.calculate_frechet_distance`를
+    쓰지 않고 이 함수 안에서 다시 계산한다 — 그 함수가 `scipy.linalg.sqrtm`을
+    `disp=False` 인자로 호출하는데, 이 인자가 최신 scipy(1.18+)에서 제거되어
+    `TypeError`가 난다. 활성값 통계(mu, sigma)는 pytorch-fid의 표준
+    InceptionV3 경로 그대로 뽑고, 그 이후의 순수 수학 계산만 scipy 최신
+    시그니처에 맞춰 다시 구현한다.
     """
     try:
-        from pytorch_fid.fid_score import calculate_fid_given_paths
+        import numpy as np
+        from pytorch_fid.fid_score import compute_statistics_of_path
+        from pytorch_fid.inception import InceptionV3
+        from scipy import linalg
     except ImportError as exc:
         raise MetricsError(
             "pytorch-fid가 설치되어 있지 않습니다. `pip install pytorch-fid`로 설치하세요."
         ) from exc
 
-    return calculate_fid_given_paths(
-        [str(generated_dir), str(real_dir)],
-        batch_size=8,
-        device=device,
-        dims=2048,
+    dims = 2048
+    model = InceptionV3([InceptionV3.BLOCK_INDEX_BY_DIM[dims]]).to(device)
+
+    mu1, sigma1 = compute_statistics_of_path(
+        str(generated_dir), model, batch_size, dims, device, num_workers
     )
+    mu2, sigma2 = compute_statistics_of_path(
+        str(real_dir), model, batch_size, dims, device, num_workers
+    )
+
+    diff = mu1 - mu2
+    covmean = linalg.sqrtm(sigma1.dot(sigma2))
+    if not np.isfinite(covmean).all():
+        eps = 1e-6
+        offset = np.eye(sigma1.shape[0]) * eps
+        covmean = linalg.sqrtm((sigma1 + offset).dot(sigma2 + offset))
+    if np.iscomplexobj(covmean):
+        covmean = covmean.real
+
+    return float(diff.dot(diff) + np.trace(sigma1) + np.trace(sigma2) - 2 * np.trace(covmean))
