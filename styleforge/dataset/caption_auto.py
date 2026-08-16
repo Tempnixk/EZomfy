@@ -68,14 +68,20 @@ class WD14Tagger:
         return array[np.newaxis, :, :, :]
 
     def tag(self, image_path: Path) -> list[str]:
-        """이미지에서 threshold 이상 확률의 일반 태그만 뽑는다 (rating 카테고리 제외)."""
+        """이미지에서 threshold 이상 확률의 일반 태그만 뽑는다 (rating 카테고리 제외).
+
+        WD14 tags.csv의 태그명은 danbooru 표기법이라 언더스코어로 이어져
+        있다(`traditional_media`, `painting_(medium)`). STYLE_TAG_BLOCKLIST는
+        사람이 읽기 쉬운 공백 표기(`traditional media`)로 적혀 있으므로 여기서
+        변환해두지 않으면 블록리스트가 전혀 매치되지 않는다.
+        """
         with Image.open(image_path) as img:
             batch = self._preprocess(img)
 
         probs = self._session.run(None, {self._input_name: batch})[0][0]
 
         return [
-            name
+            name.replace("_", " ")
             for (name, category), prob in zip(self._tags, probs)
             if category != RATING_CATEGORY and prob >= settings.wd14_tag_threshold
         ]
