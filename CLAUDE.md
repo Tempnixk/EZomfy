@@ -353,7 +353,7 @@ CLIP 기반 평가(스타일 유사도 / 원본 보존도) → 마크다운 리�
       AI 허브 라벨 승인 대기 중이라면 B경로(WD14)부터 구현하고 A경로는 나중에 붙인다.
 - [x] **Phase 3** — `train/` 전체. kohya 서브프로세스 + VRAM 관리. `train` 명령 완성.
 - [x] **Phase 4** — `sweep/` + `evaluate/`. 비교 그리드 + CLIP 평가 + 리포트.
-- [ ] **Phase 5** — 실험 3회 이상 수행 후 `docs/experiments.md`, `benchmarks.md`, README 정리.
+- [x] **Phase 5** — 실험 3회 이상 수행 후 `docs/experiments.md`, `benchmarks.md`, README 정리.
 
 각 Phase 완료 후 실제 실행으로 검증하고 커밋한다. 다음 Phase 시작 전 컨텍스트를 정리한다.
 
