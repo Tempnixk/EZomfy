@@ -82,7 +82,7 @@ def stop_comfyui(*, timeout: float = 15.0) -> bool:
     return True
 
 
-def start_comfyui(*, wait: bool = True, timeout: float = 60.0) -> None:
+def start_comfyui(*, wait: bool = True, timeout: float = 180.0) -> None:
     """설정된 명령으로 ComfyUI를 재기동한다."""
     if settings.comfy_start_command is None:
         raise TrainRunnerError("COMFY_START_COMMAND가 설정되지 않아 ComfyUI를 자동으로 재기동할 수 없습니다")
@@ -284,11 +284,23 @@ def run_train(
     # 5. ComfyUI 종료 → 학습 실행 → (원래 떠있었다면) 재기동
     was_running = stop_comfyui()
     log_path = settings.data_dir / "prepared" / name / "train.log"
+    comfy_restart_warning: str | None = None
     try:
         run_kohya(dataset_config, train_config, on_progress=on_progress, log_path=log_path)
     finally:
         if was_running:
-            start_comfyui()
+            # ComfyUI 재기동 실패(주로 헬스체크 타임아웃)는 학습 자체의 실패가
+            # 아니다 — 여기서 예외를 그대로 던지면 이미 끝난 학습의 LoRA
+            # 배치·메타데이터 기록(6단계)까지 건너뛰게 된다(실제로 한 번
+            # 발생: 재기동이 60초 안에 응답 못 했을 뿐 ComfyUI는 잠시 후
+            # 정상적으로 떴는데, LoRA는 outputs/loras/에 저장돼 있어도
+            # meta.json과 ComfyUI models/loras 복사가 누락됐었다). 경고로
+            # 남기고 메타데이터에 기록한 뒤 계속 진행한다.
+            try:
+                start_comfyui()
+            except TrainRunnerError as exc:
+                comfy_restart_warning = str(exc)
+                print(f"[train] 경고: {comfy_restart_warning} (LoRA는 정상 저장됨 — ComfyUI는 수동으로 확인할 것)")
 
     # 6. LoRA를 outputs/loras/와 ComfyUI LoRA 폴더에 배치
     lora_filename = f"{name}.safetensors"
@@ -310,6 +322,8 @@ def run_train(
         "config_template": str(config_template),
         "elapsed_seconds": round(elapsed, 2),
         "lora_path": str(generated_lora),
+        "caption_mode": caption_mode,
+        "comfy_restart_warning": comfy_restart_warning,
     }
     (Path("outputs/loras") / f"{name}.json").write_text(
         json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8"
