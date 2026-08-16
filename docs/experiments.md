@@ -265,8 +265,19 @@ LoRA: `hwajodo` (화조도 HJ, `drawing_type=채색`+`painting_type=일필+공�
    스크립트나 axes 확장이 필요하다 — 후속 과제로 남긴다.
 
 **반영:** `apply/runner.py`의 `strength_to_params()` 변경 없음(현재 곡선 유지 확인).
-후속 과제(lora_weight 재실험, controlnet on/off 대조군)는 `docs/benchmarks.md`
-작성 시 같이 정리한다.
+
+**후속 과제 3건 완료 (2026-08-16, 재학습 없이 진행 — 상세는 `docs/benchmarks.md`
+2~3장):**
+- `lora_weight` 재검증 — 풍경 이미지 1장으로 8단계까지 재탐색해도 방향성 없음을
+  재확인. 곡선 변경 근거 없음을 확정.
+- `controlnet_strength` on/off 대조군 — denoise=0.80 고정, 0.0 vs 0.6 비교.
+  세 도메인 모두에서 "켜면 원본 보존도 ↑, 스타일 적용도 소폭 ↓"가 일관되게
+  나타나 CLAUDE.md 2-(1) 설계 의도를 실측으로 뒷받침.
+- 순수 txt2img 기반 CLIP Score/FID 재측정 — 새 워크플로우
+  `workflows/style_transfer_txt2img.json` 추가. 학습 캡션 어휘 기반 프롬프트로
+  화조도 도메인에 맞춰 32장 생성. CLIP Score 0.7579로 레퍼런스(0.74)와 대등한
+  수준까지 개선(img2img 측정 시 0.5609였음) — img2img 스윕의 낮은 수치가
+  "화풍 학습이 약해서"가 아니라 "평가 입력 도메인이 안 맞아서"였음을 뒷받침.
 
 ---
 
