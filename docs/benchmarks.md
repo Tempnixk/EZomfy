@@ -14,7 +14,7 @@
 |---|---|---|
 | base model | SD 1.5 | SDXL은 8GB에서 LoRA 학습이 사실상 불가능(base UNet만 여러 GB) — CLAUDE.md 3장에서 SDXL 코드 자체를 금지 |
 | `resolution` | 512 | SD1.5 네이티브 해상도. 이 이상 올리면 latent 캐시·activation 메모리가 제곱으로 늘어 8GB에서 batch_size=1도 위태로워짐 |
-| `network_dim` | 8 | LoRA rank. 8~16 권장 구간의 하한 — 8GB에서 여유를 더 남기려는 선택. rank가 학습 품질에 미치는 영향은 E2(`docs/experiments.md`, 예정)에서 추가 검증 예정 |
+| `network_dim` | 8 | LoRA rank. 8~16 권장 구간의 하한 — 8GB에서 여유를 더 남기려는 선택. **E2(`docs/experiments.md`, 완료)로 실측 검증됨**: dim16은 dim8보다 VRAM을 445MiB 더 쓰고(8192 중 7996 사용, 여유가 크지 않음), CLIP Score/FID로는 dim8과 뚜렷한 우열이 없었다 — 현재 기본값 유지 근거로 충분하다 |
 | `network_alpha` | 4 | `network_dim`의 절반. kohya 권장 관례(alpha=dim/2)를 따름 — dim과 별도로 조정할 근거가 아직 없어 관례값 유지 |
 | `train_batch_size` | 1 | 8GB에서 batch 2 이상은 `resolution=512` + `network_dim=8` 조합에서도 OOM 위험이 커 가장 보수적인 값을 기본으로 함 |
 | `mixed_precision` | fp16 | fp32 대비 activation 메모리를 절반으로 줄임 — 8GB에서는 사실상 필수 |
@@ -165,9 +165,9 @@ FID는 386→232로 개선됐지만 여전히 레퍼런스(25.5)와는 거리가
 
 ## 4. 후속 과제 요약
 
-1. `network_dim`/learning rate 조합별 VRAM·품질 비교 (E2, 예정)
+1. ~~`network_dim`/learning rate 조합별 VRAM·품질 비교~~ — 완료 (E2, `docs/experiments.md` 참고). dim8 기본값 유지 결정.
 2. ~~`lora_weight` 축 재검증~~ — 완료 (2026-08-16, 2장 참고). 방향성 없음을 재확인.
 3. ~~`controlnet_strength` on/off 대조군 비교~~ — 완료 (2026-08-16, 2장 참고). 뚜렷한 트레이드오프 확인.
-4. 학습 중 피크 VRAM 실측 로깅 — E1/E2/E3(예정) 재학습 시 `nvidia-smi` 병행 실행으로 같이 잡을 것
+4. ~~학습 중 피크 VRAM 실측 로깅~~ — 완료 (E1/E2 재학습 중 `nvidia-smi`로 확인: dim8 7551MiB, dim16 7848~7996MiB). E3는 아직.
 5. ~~순수 txt2img 기반 CLIP Score/FID 재측정~~ — 완료 (2026-08-16, 3장 참고). CLIP Score는 레퍼런스와 대등, FID는 표본 규모 한계로 여전히 참고용.
 6. FID 표본을 최소 수백 장으로 늘리는 재실험 (측정 2 방식 그대로, 프롬프트/seed만 확장)

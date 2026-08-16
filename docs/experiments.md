@@ -178,30 +178,73 @@ A경로였음을 확인). B는 이번에 `--caption-mode auto`로 새로 학습�
 
 ## E2. 학습 하이퍼파라미터 탐색
 
-**상태:** ⬜ 예정
+**상태:** ✅ 완료 (2026-08-16~17)
 
 ### 가설
 8GB VRAM 제약 하에서 `network_dim`(rank)과 learning rate의 조합에 따라
 화풍 재현도와 과적합 정도가 달라질 것이다.
 
 ### 설정
-| 실험 | network_dim | learning rate | epoch | 소요 시간 |
-|---|---|---|---|---|
-| exp01 | 8 | 1e-4 | | |
-| exp02 | 16 | 1e-4 | | |
-| exp03 | 16 | 5e-5 | | |
+`configs/train_e2_exp{01,02,03}.toml`로 각각 새로 학습(HJ/채색/일필+공필,
+`select_subset(seed=0)` 기준 동일 40장 — E1/hwajodo와 같은 모집단·같은 샘플).
 
-공통: SD 1.5, batch 2, resolution 512, fp16, enable_bucket, 40장
+| 실험 | network_dim | network_alpha | learning rate | 소요 시간 | 피크 VRAM |
+|---|---|---|---|---:|---:|
+| exp01 | 8 | 4 | 1e-4 | 36분 (2160.79초) | 7551 MiB |
+| exp02 | 16 | 8 | 1e-4 | 44분48초 (2688.69초) | 7996 MiB |
+| exp03 | 16 | 8 | 5e-5 | 46분45초 (2805.28초) | 7848 MiB |
+
+공통: SD 1.5, `train_batch_size=2`, resolution 512, fp16, enable_bucket,
+10 epoch, AdamW8bit, cosine scheduler, 40장. (`hwajodo`/E1과 달리 배치가
+2라 총 스텝은 2,000 — 재사용 불가능해서 셋 다 새로 학습했다.)
 
 ### 결과
-```
-(측정 후 기록 — 고정 프롬프트 세트로 생성한 비교 이미지 첨부)
-```
+`docs/benchmarks.md` 측정 2·E1과 동일한 방법론으로 채점했다 — 화조도 소재
+프롬프트 8종 × seed 4개 = 32장을 각 LoRA로 txt2img 생성(`lora_weight=1.0`),
+CLIP Score는 생성 프롬프트 대비, FID는 실사 Validation 91장 대비.
 
-### 해석 / 결정
-```
-(작성 예정)
-```
+| 실험 | CLIP Score | FID |
+|---|---:|---:|
+| exp01 (dim8, lr1e-4) | **0.7678** (min 0.7061, max 0.8447) | 244.74 |
+| exp02 (dim16, lr1e-4) | 0.7615 (min 0.7105, max 0.8360) | **231.60** |
+| exp03 (dim16, lr5e-5) | 0.7536 (min 0.6794, max 0.8180) | 240.98 |
+
+셋 다 `hwajodo`(같은 방식으로 측정한 CLIP Score 0.7579, 레퍼런스 0.74)와
+비슷한 구간에 있다 — 이 정도 범위 안에서는 하이퍼파라미터 조합이 극적인
+차이를 만들지 않는다는 뜻이다. 육안으로도 exp01/exp02 샘플을 비교했는데
+(학·소나무 프롬프트), exp02(dim16)의 깃털·바위 질감이 조금 더 섬세하게
+나온 인상은 있었지만 exp01도 완성도 자체는 충분히 높았다 — 확정적인
+우열로 보기엔 주관적인 인상에 가깝다.
+
+### 해석
+- **dim8 vs dim16 (lr1e-4 고정, exp01 vs exp02):** CLIP Score는 dim8이
+  근소 우위(+0.006), FID는 dim16이 뚜렷 우위(-13.1). 신호가 지표마다
+  갈려서 "rank를 올리면 무조건 좋아진다"는 근거는 안 된다.
+- **lr1e-4 vs lr5e-5 (dim16 고정, exp02 vs exp03):** **CLIP Score·FID
+  둘 다 lr1e-4가 더 좋다** (CLIP +0.008, FID -9.4) — 방향이 일관됐다.
+  10 epoch로 고정한 상태에서 lr을 절반으로 낮추면 같은 스텝 수 안에
+  충분히 수렴하지 못했을 가능성이 높다(과소학습). lr을 낮추려면 epoch
+  수도 함께 늘려야 공정한 비교가 된다는 뜻이기도 하다.
+- **VRAM: dim16(exp02) 7996 MiB가 8192 MiB 한계에 꽤 근접했다.** dim8(exp01)
+  대비 445 MiB 더 쓴다 — 8GB에서 dim16 + batch2 조합은 여유가 많지 않으므로,
+  다른 커스텀 노드나 배치 크기를 더 올리는 변경과는 같이 쓰기 어렵다.
+- **소요 시간은 dim에 비례해 늘었다** (dim8 36분 < dim16 45~47분) — lr 차이
+  (exp02 vs exp03)는 소요 시간에 영향 없음(예상대로, lr은 연산량과 무관).
+
+### 결정
+1. **`configs/train_default.toml`의 `network_dim=8`, `learning_rate=1e-4`
+   기본값을 유지한다.** exp01(현재 기본값과 거의 동일 조건, batch만 다름)이
+   CLIP Score 최고치를 기록했고, VRAM 여유도 가장 크다 — 8GB 제약 하에서
+   "무난하게 잘 되는" 기본값이라는 CLAUDE.md 3장의 원래 근거가 실측으로도
+   재확인됐다.
+2. **`network_dim=16`을 쓰고 싶다면 `learning_rate`는 낮추지 말 것** —
+   exp02(16/1e-4)가 exp03(16/5e-5)보다 두 지표 모두 우세했다. rank를
+   올리는 것과 lr을 낮추는 것을 동시에 하면 상쇄돼 오히려 손해였다.
+3. **dim16 + batch2 조합은 VRAM 여유가 크지 않다(8192 중 7996 사용)** —
+   이 조합을 기본값으로 올리려면 `gradient_checkpointing`처럼 VRAM을
+   더 아끼는 설정과 반드시 같이 검토해야 한다.
+4. 표본 32장 규모의 한계는 E1과 동일하게 적용된다 — 격차가 크지 않은
+   지표(CLIP Score 0.006~0.014 차이)는 노이즈일 가능성을 열어둔다.
 
 ---
 
