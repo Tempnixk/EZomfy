@@ -111,7 +111,7 @@ kohya 설정 생성 → ComfyUI 자동 종료 → kohya 학습 → LoRA를 `outp
 ComfyUI `models/loras`에 배치 → ComfyUI 재기동.
 
 <img width="886" height="306" alt="image" src="https://github.com/user-attachments/assets/e2121cb9-93e7-485d-ab61-cc0537e5668b" />
-
+해당 데이터셋을 사용했습니다.
 
 ### `apply` — 이미지 → 화풍 변환
 
@@ -129,7 +129,10 @@ styleforge apply --image .\samples\photo.jpg --style hwajodo --strength 0.6
 과거 버전 대비 실측 성능 차이는 [`docs/benchmarks.md`](docs/benchmarks.md)
 3장 참고.
 
+<img width="453" height="677" alt="images" src="https://github.com/user-attachments/assets/eeffec35-50e2-4f46-a7ef-b7338b9e0ef7" />
+원본 이미지
 <img width="344" height="512" alt="styleforge_apply_00076_" src="https://github.com/user-attachments/assets/fbb7bab4-e1cf-485f-ae27-e32ae089018d" />
+화풍 변환 후
 
 ### `sweep` — 파라미터 탐색 + 비교 그리드
 
