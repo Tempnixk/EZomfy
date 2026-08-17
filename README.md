@@ -215,6 +215,17 @@ pyinstaller --onefile --windowed --name StyleForge --distpath . --workpath build
 ## ComfyUI 워크플로우 캡쳐
 <img width="1718" height="565" alt="image" src="https://github.com/user-attachments/assets/ba58a50a-9664-4b39-9848-c07dbaf8a9b9" />
 
+입력 사진 불러오기
+   ↓
+윤곽선(lineart) 추출
+   ↓
+ControlNet에 윤곽선 넘기기
+   ↓
+화풍 LoRA 적용
+   ↓
+디노이즈 강도만큼 다시 그리기
+   ↓
+결과 이미지 저장
 ---
 
 ## 데이터·모델 이용 정책
