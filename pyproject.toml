@@ -28,6 +28,7 @@ evaluate = ["torch", "torchvision", "open-clip-torch", "pytorch-fid>=0.3"]
 
 [project.scripts]
 styleforge = "styleforge.cli:app"
+styleforge-gui = "styleforge.gui.main:main"
 
 [build-system]
 requires = ["setuptools>=68"]

@@ -44,7 +44,7 @@ class TrainProgress:
 # --- VRAM 관리: ComfyUI 중지/재기동 -----------------------------------------
 
 
-def _comfy_is_up() -> bool:
+def comfy_is_up() -> bool:
     try:
         response = requests.get(f"{settings.comfy_url}/system_stats", timeout=3)
         return response.status_code == 200
@@ -54,7 +54,7 @@ def _comfy_is_up() -> bool:
 
 def stop_comfyui(*, timeout: float = 15.0) -> bool:
     """포트를 점유한 ComfyUI 프로세스를 종료한다. 원래 떠있었으면 True를 반환한다."""
-    if not _comfy_is_up():
+    if not comfy_is_up():
         return False
 
     port = urlparse(settings.comfy_url).port
@@ -105,7 +105,7 @@ def start_comfyui(*, wait: bool = True, timeout: float = 180.0) -> None:
 
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
-        if _comfy_is_up():
+        if comfy_is_up():
             return
         time.sleep(1.0)
     raise TrainRunnerError("ComfyUI 재기동 후 응답이 없습니다 (timeout)")
@@ -232,6 +232,7 @@ def run_train(
     caption_mode: CaptionMode | None = None,
     auto_confirm: bool = False,
     on_progress: Callable[[TrainProgress], None] | None = None,
+    on_warning: Callable[[list[str]], bool] | None = None,
 ) -> Path:
     """train 명령의 실행 흐름. 완성된 LoRA 파일 경로를 반환한다."""
     if caption_mode is not None and caption_mode not in ("auto", "external"):
@@ -269,8 +270,14 @@ def run_train(
         for warning in report.warnings:
             print(f"[train] 경고: {warning.message}")
         if not auto_confirm:
-            answer = input("[train] 위 경고를 무시하고 계속하시겠습니까? (y/N): ")
-            if answer.strip().lower() != "y":
+            if on_warning is not None:
+                # GUI 등 콘솔이 없는 호출부용 — input()은 백그라운드 스레드에서
+                # 호출하면 안 되므로, 확인 UI를 대신 보여줄 콜백을 위임한다.
+                proceed = on_warning([w.message for w in report.warnings])
+            else:
+                answer = input("[train] 위 경고를 무시하고 계속하시겠습니까? (y/N): ")
+                proceed = answer.strip().lower() == "y"
+            if not proceed:
                 raise TrainRunnerError("사용자가 학습을 취소했습니다")
 
     # 4. kohya 설정 생성

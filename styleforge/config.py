@@ -60,3 +60,26 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
+def update_env_file(values: dict[str, str], *, env_path: Path = Path(".env")) -> None:
+    """.env 파일에서 지정된 키만 갱신한다 (없던 키는 파일 끝에 추가).
+
+    GUI 설정 다이얼로그가 사용자에게 .env를 직접 열어 고치라고 하지 않고
+    바로 저장할 수 있게 하기 위한 것. 값이 빈 문자열이면 미설정(키만 남기고
+    값 비움)으로 저장한다 — Settings의 `_empty_string_as_unset`이 이를
+    None으로 읽는다.
+    """
+    lines = env_path.read_text(encoding="utf-8").splitlines() if env_path.is_file() else []
+    remaining = dict(values)
+    updated_lines = []
+    for line in lines:
+        stripped = line.strip()
+        key = stripped.split("=", 1)[0].strip() if "=" in stripped and not stripped.startswith("#") else None
+        if key is not None and key in remaining:
+            updated_lines.append(f"{key}={remaining.pop(key)}")
+        else:
+            updated_lines.append(line)
+    for key, value in remaining.items():
+        updated_lines.append(f"{key}={value}")
+    env_path.write_text("\n".join(updated_lines) + "\n", encoding="utf-8")
