@@ -171,6 +171,27 @@ styleforge-gui
 `.env`에 바로 저장할 수 있습니다 — 외장 드라이브 연결이 바뀌는 등으로
 경로가 자주 깨지는 문제를 텍스트 에디터 없이 고칠 수 있게 하기 위함입니다.
 
+#### 배포용 실행 파일 만들기
+
+터미널 없이 더블클릭만으로 GUI를 켜고 싶다면 `StyleForge.exe`를 빌드할 수
+있습니다. **이 exe는 `.venv`를 다시 담지 않는 얇은 런처**입니다 — 위
+[설치](#설치) 과정을 이미 끝낸(=`.venv`가 준비된) 컴퓨터에서만 동작하며,
+그 컴퓨터의 `.venv\Scripts\pythonw.exe`로 GUI를 대신 실행해줄 뿐입니다.
+그래서 torch 등 무거운 의존성을 다시 묶지 않아 빌드가 몇 초 안에 끝나고
+결과물도 10MB 안팎으로 작습니다. (설치 없이 어디서나 도는 완전한 단일
+배포판이 필요하다면 이 방식으로는 부족합니다 — evaluate 의존성(torch)까지
+통째로 묶는 PyInstaller 빌드가 별도로 필요하며, 결과물이 수 GB로 커지고
+onnxruntime/torch 조합이 빌드 환경에 따라 깨지기 쉽습니다.)
+
+```powershell
+pip install -e ".[build]"
+pyinstaller --onefile --windowed --name StyleForge --distpath . --workpath build --specpath build scripts/launch_gui.py
+```
+
+`StyleForge.exe`가 프로젝트 루트(`.venv`, `.env`가 있는 위치)에 생성됩니다.
+**이 exe는 반드시 그 자리에 두고 실행해야 합니다** — 자기 위치를 기준으로
+`.venv`를 찾기 때문입니다. `.venv`가 없는 채로 실행하면 안내 메시지 창이 뜹니다.
+
 ---
 <img width="812" height="664" alt="image" src="https://github.com/user-attachments/assets/87dbe5ba-2177-4d8d-bde6-9d2ea20970a3" />
 

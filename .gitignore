@@ -140,6 +140,9 @@ venv.bak/
 /data/
 /outputs/
 
+# 배포용 빌드 산출물 (scripts/launch_gui.py로 재생성 가능 — README 참고)
+/StyleForge.exe
+
 # Spyder project settings
 .spyderproject
 .spyproject

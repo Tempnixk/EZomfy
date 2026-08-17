@@ -25,6 +25,10 @@ dev = ["pytest>=8.0"]
 #   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 #   pip install open-clip-torch pytorch-fid
 evaluate = ["torch", "torchvision", "open-clip-torch", "pytorch-fid>=0.3"]
+# StyleForge.exe(scripts/launch_gui.py) 빌드용. torch 등 무거운 의존성은
+# 다시 번들링하지 않고 대상 컴퓨터의 .venv를 그대로 쓰는 얇은 런처라서
+# pyinstaller 하나면 충분하다 (README "배포용 실행 파일 만들기" 참고).
+build = ["pyinstaller>=6.0"]
 
 [project.scripts]
 styleforge = "styleforge.cli:app"
