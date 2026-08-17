@@ -211,6 +211,9 @@ pyinstaller --onefile --windowed --name StyleForge --distpath . --workpath build
 - [`docs/benchmarks.md`](docs/benchmarks.md) — 8GB VRAM 제약 하 파라미터
   선택 근거, apply/sweep 성능 실측(이미지 리사이즈 수정 전/후 비교),
   AI 허브 공개 레퍼런스 대비 위치
+---
+## ComfyUI 워크플로우 캡쳐
+<img width="1718" height="565" alt="image" src="https://github.com/user-attachments/assets/ba58a50a-9664-4b39-9848-c07dbaf8a9b9" />
 
 ---
 
