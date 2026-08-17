@@ -24,6 +24,10 @@ styleforge apply --image photo.jpg --style minhwa --strength 0.6
 styleforge sweep --image photo.jpg --style minhwa
 ```
 
+CLI가 부담스러우면 같은 3개 명령을 데스크톱 GUI로도 쓸 수 있다(`styleforge-gui`,
+`styleforge/gui/`, tkinter — 11장 참고). GUI는 새 로직이 아니라 위 3개 명령의
+얇은 래퍼다.
+
 ### 설계 철학
 - **사용자는 denoise/rank/lr을 몰라도 된다.** 기본값으로 쓸 만한 결과가 나와야 한다.
 - **모든 실행은 재현 가능하다.** 결과물 옆에 항상 파라미터 메타데이터를 남긴다.
@@ -212,9 +216,18 @@ styleforge/
 │   │   ├── planner.py          # 파라미터 조합 생성 (denoise × lora_weight × cn_strength)
 │   │   └── grid.py             # 결과 비교 그리드 이미지 생성 (축 라벨 포함)
 │   │
-│   └── evaluate/
-│       ├── metrics.py          # CLIP Score, FID, 원본 보존도
-│       └── report.py           # 실행 결과 마크다운 리포트 (레퍼런스 기준선 대조 포함)
+│   ├── evaluate/
+│   │   ├── metrics.py          # CLIP Score, FID, 원본 보존도
+│   │   └── report.py           # 실행 결과 마크다운 리포트 (레퍼런스 기준선 대조 포함)
+│   │
+│   └── gui/                    # 데스크톱 GUI (tkinter) — train/apply/sweep의 얇은 래퍼
+│       ├── main.py             # 진입점 (`styleforge-gui`), Notebook에 3개 탭 배치
+│       ├── worker.py           # 백그라운드 스레드 + 진행률/확인창 큐 브릿지
+│       ├── common.py           # 공통 위젯 (BrowseEntry, LogBox, ComfyStatusBar 등)
+│       ├── settings_dialog.py  # ComfyUI 경로 설정 다이얼로그 (.env 직접 갱신)
+│       ├── train_tab.py
+│       ├── apply_tab.py
+│       └── sweep_tab.py
 │
 ├── workflows/                  # ComfyUI API 포맷 JSON (수동 저장)
 │   ├── style_transfer_lineart.json
@@ -397,7 +410,11 @@ Phase 0~2를 진행한다.
 - 워크플로우 로직을 파이썬으로 재구현 (ComfyUI JSON을 그대로 쓸 것)
 - 노드 ID·경로 하드코딩
 - StyleForge와 kohya_ss의 의존성 통합
-- 웹 UI, 서버, DB 추가 (이 프로젝트는 CLI 툴이다. 범위를 넓히지 않는다)
+- 웹 UI(브라우저로 접속하는 서버형 UI), 별도 서버 프로세스, DB 추가.
+  **단, 로컬에서만 도는 데스크톱 GUI(`styleforge/gui/`, tkinter)는 예외다** —
+  사용자 요청으로 추가된 두 번째 진입점이며, 서버를 띄우지 않고 기존
+  `train/apply/sweep` runner를 그대로 호출하는 얇은 래퍼다(6장·8장 원칙
+  동일 적용). 이 예외 밖의 범위 확장(웹 서버, API, DB)은 여전히 금지다.
 - 요청하지 않은 리팩터링, 파일 대량 선생성
 
 ---
@@ -412,6 +429,9 @@ Phase 0~2를 진행한다.
 styleforge train --input %DATASET_ROOT% --name hwajodo --filter HJ --meta-filter drawing_type=채색,painting_type=일필+공필 --limit 40
 styleforge apply --image .\samples\photo.jpg --style hwajodo --strength 0.6
 styleforge sweep --image .\samples\photo.jpg --style hwajodo
+
+# GUI로 쓰기
+styleforge-gui
 
 # ComfyUI 수동 기동 (프로젝트 외부 경로)
 # python main.py --listen 127.0.0.1 --port 8188

@@ -29,3 +29,11 @@ field = "denoise"
 [params.seed]
 node = "3"
 field = "seed"
+
+[params.resize_width]
+node = "13"
+field = "width"
+
+[params.resize_height]
+node = "13"
+field = "height"

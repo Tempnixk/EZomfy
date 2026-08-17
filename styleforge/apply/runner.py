@@ -13,9 +13,30 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
+from PIL import Image
+
 from styleforge.apply.comfy_client import ComfyClient, ComfyClientError, ProgressUpdate
 from styleforge.apply.workflow_loader import WorkflowLoadError, load_and_apply
 from styleforge.config import settings
+
+_SD15_TARGET_SIDE = 512  # SD1.5 네이티브 해상도 (CLAUDE.md 3장)
+
+
+def _fit_to_target_side(width: int, height: int, *, target: int = _SD15_TARGET_SIDE) -> tuple[int, int]:
+    """긴 변을 target에 맞춰 비율을 유지한 채 축소/확대한다.
+
+    apply 워크플로우는 원본 이미지를 리사이즈 없이 그대로 VAEEncode/KSampler에
+    넣었었다 — 휴대폰 사진처럼 4000px대 원본이 들어오면 SD1.5가 512 기준으로
+    학습된 것과 무관하게 그 해상도 그대로 diffusion을 돌려 VAE가 OOM으로
+    타일 모드에 빠지고 스텝당 수십 배 느려지는 문제가 있었다. 정사각 크롭 대신
+    긴 변만 맞추는 이유는 민화 원본의 극단적 종횡비(CLAUDE.md 3장 버킷팅
+    설명과 동일한 이유)를 구도 왜곡 없이 보존하기 위함이다.
+    """
+    longer = max(width, height)
+    scale = target / longer
+    new_w = max(8, round(width * scale / 8) * 8)
+    new_h = max(8, round(height * scale / 8) * 8)
+    return new_w, new_h
 
 
 class ApplyError(RuntimeError):
@@ -70,6 +91,9 @@ def run_apply_with_params(
     resolved_seed = seed if seed is not None else random.randint(0, 2**32 - 1)
     positive_prompt = prompt or f"{style}, best quality"
 
+    with Image.open(image) as img:
+        resize_width, resize_height = _fit_to_target_side(img.width, img.height)
+
     client = ComfyClient(settings.comfy_url)
     started_at = time.monotonic()
 
@@ -86,6 +110,8 @@ def run_apply_with_params(
                 "lora_weight": params.lora_weight,
                 "controlnet_strength": params.controlnet_strength,
                 "seed": resolved_seed,
+                "resize_width": resize_width,
+                "resize_height": resize_height,
             },
         )
 
@@ -108,6 +134,8 @@ def run_apply_with_params(
         "workflow": workflow_name,
         "prompt": positive_prompt,
         "seed": resolved_seed,
+        "resize_width": resize_width,
+        "resize_height": resize_height,
         "output_images": [str(p) for p in saved_paths],
         "elapsed_seconds": round(elapsed, 2),
         **(extra_meta or {}),

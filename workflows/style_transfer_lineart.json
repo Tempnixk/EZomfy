@@ -40,10 +40,21 @@
     },
     "_meta": { "title": "부정 프롬프트" }
   },
+  "13": {
+    "class_type": "ImageScale",
+    "inputs": {
+      "image": ["1", 0],
+      "upscale_method": "lanczos",
+      "width": 512,
+      "height": 512,
+      "crop": "disabled"
+    },
+    "_meta": { "title": "입력 이미지 리사이즈 (SD1.5 512 기준, 원본 비율 유지)" }
+  },
   "5": {
     "class_type": "VAEEncode",
     "inputs": {
-      "pixels": ["1", 0],
+      "pixels": ["13", 0],
       "vae": ["2", 2]
     },
     "_meta": { "title": "입력 이미지 인코딩" }
@@ -51,7 +62,7 @@
   "7": {
     "class_type": "LineArtPreprocessor",
     "inputs": {
-      "image": ["1", 0],
+      "image": ["13", 0],
       "coarse": "disable",
       "resolution": 512
     },

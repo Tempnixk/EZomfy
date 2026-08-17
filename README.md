@@ -120,6 +120,12 @@ styleforge apply --image .\samples\photo.jpg --style hwajodo --strength 0.6
 세 축을 함께 조절합니다. 결과는 `outputs/applied/{timestamp}_{style}/`에
 이미지와 `meta.json`으로 저장됩니다.
 
+입력 이미지는 원본 해상도 그대로 diffusion에 들어가지 않고, 원본 비율을
+유지한 채 긴 변을 SD1.5 기준(512px)에 맞춰 자동 리사이즈됩니다. 폰카메라
+사진처럼 큰 원본을 그대로 넣어도 느려지지 않습니다 — 리사이즈가 없던
+과거 버전 대비 실측 성능 차이는 [`docs/benchmarks.md`](docs/benchmarks.md)
+3장 참고.
+
 ### `sweep` — 파라미터 탐색 + 비교 그리드
 
 ```powershell
@@ -131,6 +137,23 @@ styleforge sweep --image .\samples\photo.jpg --style hwajodo
 마크다운 리포트(`report.md`)를 `outputs/sweeps/{timestamp}_{style}/`에
 남깁니다. 권장 조합 1개를 콘솔에 출력합니다.
 
+### GUI로 쓰기
+
+명령줄 대신 데스크톱 GUI로도 같은 3개 기능(학습/적용/탐색)을 쓸 수 있습니다.
+
+```powershell
+styleforge-gui
+```
+
+탭으로 나뉜 창이 뜨고, 각 탭이 위 `train`/`apply`/`sweep` 명령과 1:1로
+대응합니다. 새 서버나 브라우저를 띄우지 않는 로컬 전용 창입니다.
+
+상단 바에는 ComfyUI 실행 상태(켜짐/꺼짐)가 표시되고, 꺼져 있으면 **켜기**
+버튼으로 바로 기동할 수 있습니다(`COMFY_START_COMMAND` 필요). **설정**
+버튼을 누르면 ComfyUI 실행 파일 폴더·LoRA 폴더 경로를 찾아보기로 골라
+`.env`에 바로 저장할 수 있습니다 — 외장 드라이브 연결이 바뀌는 등으로
+경로가 자주 깨지는 문제를 텍스트 에디터 없이 고칠 수 있게 하기 위함입니다.
+
 ---
 
 ## 문서
@@ -140,7 +163,8 @@ styleforge sweep --image .\samples\photo.jpg --style hwajodo
   민화 데이터셋 실측 스펙(공식 설명서와의 불일치 포함), 화목 코드표
 - [`docs/experiments.md`](docs/experiments.md) — 학습·튜닝 실험 기록
 - [`docs/benchmarks.md`](docs/benchmarks.md) — 8GB VRAM 제약 하 파라미터
-  선택 근거, AI 허브 공개 레퍼런스 대비 위치
+  선택 근거, apply/sweep 성능 실측(이미지 리사이즈 수정 전/후 비교),
+  AI 허브 공개 레퍼런스 대비 위치
 
 ---
 

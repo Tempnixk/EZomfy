@@ -9,6 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
+from styleforge.apply.comfy_client import ProgressUpdate
 from styleforge.apply.runner import ApplyError, StrengthParams, run_apply_with_params
 from styleforge.config import settings
 from styleforge.evaluate.metrics import MetricsError, StyleEvalResult, evaluate_style_transfer
@@ -28,6 +29,8 @@ class SweepProgress:
     combo_index: int
     total_combos: int
     stage: str  # "applying" | "evaluating"
+    step: int | None = None  # ComfyUI KSampler 진행 스텝 (stage="applying" 중에만 채워짐)
+    total_steps: int | None = None
 
 
 def _style_reference_images(style: str) -> list[Path]:
@@ -84,6 +87,18 @@ def run_sweep(
         )
         combo_dir = output_dir / f"combo_{combo.index:02d}"
 
+        def _on_comfy_progress(update: ProgressUpdate) -> None:
+            if on_progress is not None:
+                on_progress(
+                    SweepProgress(
+                        combo_index=combo.index,
+                        total_combos=total,
+                        stage="applying",
+                        step=update.value,
+                        total_steps=update.max,
+                    )
+                )
+
         try:
             run_apply_with_params(
                 image=image,
@@ -92,6 +107,7 @@ def run_sweep(
                 workflow_name=workflow_name,
                 output_dir=combo_dir,
                 extra_meta={"axis_values": combo.axis_values, "combo_index": combo.index},
+                on_progress=_on_comfy_progress if on_progress is not None else None,
             )
         except ApplyError as exc:
             raise SweepError(f"조합 #{combo.index}({combo.label}) 실행 실패: {exc}") from exc

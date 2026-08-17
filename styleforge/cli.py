@@ -124,11 +124,16 @@ def sweep(
 
             def on_progress(update: SweepProgress) -> None:
                 completed = update.combo_index + (0.5 if update.stage == "evaluating" else 0.0)
+                step_text = (
+                    f" — {update.step}/{update.total_steps} 스텝"
+                    if update.step is not None and update.total_steps
+                    else ""
+                )
                 progress.update(
                     task,
                     total=update.total_combos,
                     completed=completed,
-                    description=f"조합 {update.combo_index + 1}/{update.total_combos} ({update.stage})",
+                    description=f"조합 {update.combo_index + 1}/{update.total_combos} ({update.stage}){step_text}",
                 )
 
             output_dir = run_sweep(
