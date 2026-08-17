@@ -110,6 +110,9 @@ styleforge train --input %DATASET_ROOT% --name hwajodo --filter HJ `
 kohya 설정 생성 → ComfyUI 자동 종료 → kohya 학습 → LoRA를 `outputs/loras/`와
 ComfyUI `models/loras`에 배치 → ComfyUI 재기동.
 
+<img width="886" height="306" alt="image" src="https://github.com/user-attachments/assets/e2121cb9-93e7-485d-ab61-cc0537e5668b" />
+
+
 ### `apply` — 이미지 → 화풍 변환
 
 ```powershell
@@ -126,6 +129,8 @@ styleforge apply --image .\samples\photo.jpg --style hwajodo --strength 0.6
 과거 버전 대비 실측 성능 차이는 [`docs/benchmarks.md`](docs/benchmarks.md)
 3장 참고.
 
+<img width="344" height="512" alt="styleforge_apply_00076_" src="https://github.com/user-attachments/assets/fbb7bab4-e1cf-485f-ae27-e32ae089018d" />
+
 ### `sweep` — 파라미터 탐색 + 비교 그리드
 
 ```powershell
@@ -136,6 +141,8 @@ styleforge sweep --image .\samples\photo.jpg --style hwajodo
 스타일 적용도/원본 보존도를 채점해 축 라벨 붙은 비교 그리드 이미지와
 마크다운 리포트(`report.md`)를 `outputs/sweeps/{timestamp}_{style}/`에
 남깁니다. 권장 조합 1개를 콘솔에 출력합니다.
+
+<img width="1186" height="1156" alt="grid" src="https://github.com/user-attachments/assets/3b5ef5f5-e1c1-4914-bf21-c810f7449e19" />
 
 ### GUI로 쓰기
 
@@ -155,6 +162,11 @@ styleforge-gui
 경로가 자주 깨지는 문제를 텍스트 에디터 없이 고칠 수 있게 하기 위함입니다.
 
 ---
+<img width="812" height="664" alt="image" src="https://github.com/user-attachments/assets/87dbe5ba-2177-4d8d-bde6-9d2ea20970a3" />
+
+<img width="806" height="657" alt="image" src="https://github.com/user-attachments/assets/4d550460-7f05-4dba-a25c-d6bc2af46a9d" />
+
+<img width="811" height="665" alt="image" src="https://github.com/user-attachments/assets/84509268-b913-4b77-be9a-4d8fcd0665a8" />
 
 ## 문서
 
