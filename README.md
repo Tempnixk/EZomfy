@@ -20,6 +20,13 @@ styleforge sweep --image photo.jpg --style minhwa
 탐색해 감이 아니라 수치로 튜닝 근거를 남깁니다. 설계 배경은 [CLAUDE.md](CLAUDE.md)에
 자세히 정리되어 있습니다.
 
+**성능:** `apply`/`sweep`은 입력 이미지를 원본 비율을 유지한 채 SD1.5 기준
+(512px)으로 자동 리사이즈합니다. 폰카메라 원본(4032×3024)처럼 큰 이미지를
+리사이즈 없이 그대로 diffusion에 넣던 과거 버전은 VAE가 8GB VRAM에서 OOM →
+타일 모드로 폴백해 극도로 느려졌는데(스텝당 43초), 이 최적화로 동일 조건에서
+apply 1회 약 **136배**, sweep 1회(16조합) 약 **250배 이상** 단축했습니다
+(실측 수치: [`docs/benchmarks.md`](docs/benchmarks.md) 3장).
+
 ---
 
 ## 요구 사항
